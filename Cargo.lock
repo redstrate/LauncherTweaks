@@ -145,17 +145,17 @@ dependencies = [
 [[package]]
 name = "proxy-dll"
 version = "0.2.5"
-source = "git+https://github.com/redstrate/dll-proxy-rs/#3a189b1c4ed2b739a8a752b2ed9c68721f8737cd"
+source = "git+https://github.com/redstrate/dll-proxy-rs/#7eb0e25f6a74b726d67f94a72696f0a8f2239c21"
 dependencies = [
  "ctor",
  "proxy-sys",
- "winapi",
+ "windows",
 ]
 
 [[package]]
 name = "proxy-sys"
 version = "0.2.2"
-source = "git+https://github.com/redstrate/dll-proxy-rs/#3a189b1c4ed2b739a8a752b2ed9c68721f8737cd"
+source = "git+https://github.com/redstrate/dll-proxy-rs/#7eb0e25f6a74b726d67f94a72696f0a8f2239c21"
 dependencies = [
  "syn 2.0.100",
 ]
