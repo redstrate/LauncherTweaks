@@ -14,3 +14,6 @@ windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Syst
 serde = { version = "1.0", features = ["derive"], default-features = false }
 toml = { version = "0.8", features = ["parse"], default-features = false }
 retour = { version = "0.3", features = ["static-detour"], default-features = false }
+
+[replace]
+"mmap-fixed-fixed:0.1.3" = { git = "https://github.com/redstrate/rust-mmap-fixed-fixed" } # my fork which removes the winapi dependency
