@@ -8,7 +8,7 @@ Tweaks for the official FFXIV launcher.
 
 ## Usage
 
-Build the project with the instructions below. Then, place the `version.dll` next to the launcher.
+Grab a build from [GitHub Actions](https://github.com/redstrate/LauncherTweaks/actions) or build the project with the instructions below. Then, place the `version.dll` next to the launcher.
 
 To configure the launcher URL, place a `launchertweaks.toml` next to the launcher executable:
 
