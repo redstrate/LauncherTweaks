@@ -1,23 +1,9 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 pub struct Config {
-    #[serde(default = "Config::default_launcher_url")]
-    pub launcher_url: String,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            launcher_url: Self::default_launcher_url(),
-        }
-    }
-}
-
-impl Config {
-    fn default_launcher_url() -> String {
-        "about:blank".to_string()
-    }
+    pub launcher_url: Option<String>,
+    pub winhttp_proxy: Option<String>,
 }
 
 pub fn get_config() -> Config {

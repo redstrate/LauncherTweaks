@@ -5,6 +5,7 @@ Tweaks for the official FFXIV launcher.
 ## Features
 
 * Allows configuring the launcher URL, enabling you to write custom launcher pages.
+* Force the launcher/boot executable to use the system proxy. (The web browser portions of the launcher already use the system proxy.)
 
 ## Usage
 
@@ -41,13 +42,19 @@ error occurred in cc-rs: failed to find tool "x86_64-w64-mingw32-gcc": No such f
 
 Then you need to install the MinGW toolchain, as one of our dependencies has to compile C code.
 
-## Launcher Functions
+## Tips & Tricks
+
+### Launcher Functions
 
 Here are some interesting native functions that are callable from JavaScript. To call these, use `window.external.user`.
 
 * `systemConfig`: Opens the system config program.
 * `requestExit`: Despite the name, exits the launcher immediately.
 * `requestReboot`: Exits the launcher immediately, doesn't seem to come back though?
+
+### Logging Proxy
+
+You can use the `winhttp_proxy` config option to sniff the non-web browser traffic from the launcher. You need a HTTP proxy capable of logging of course, I personally use [mitmproxy](https://mitmproxy.org).
 
 ## Credits
 

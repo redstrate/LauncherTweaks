@@ -1,12 +1,25 @@
 use std::ffi::CString;
 
 use skidscan::Signature;
-use windows::{Win32::UI::WindowsAndMessaging::MessageBoxA, core::*};
+use windows::{
+    Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress},
+    Win32::UI::WindowsAndMessaging::MessageBoxA,
+    core::*,
+};
 
 use crate::LAUNCHER_FILENAME;
 
 pub fn find_signature(sig: Signature) -> Option<*mut u8> {
     unsafe { sig.scan_module(LAUNCHER_FILENAME).ok() }
+}
+
+pub fn find_symbol(symbol: &str, module: &str) -> Option<*mut u8> {
+    let module: Vec<u16> = module.encode_utf16().chain(std::iter::once(0)).collect();
+    let symbol = CString::new(symbol).expect("Failed to parse symbol!");
+    unsafe {
+        let handle = GetModuleHandleW(PCWSTR(module.as_ptr() as _)).expect("Module not loaded!");
+        GetProcAddress(handle, PCSTR(symbol.as_ptr() as _)).map(|func| func as *mut u8)
+    }
 }
 
 pub fn show_message(message: &str) {
