@@ -8,8 +8,8 @@ crate-type = ["cdylib"]
 name = "winhttp"
 
 [dependencies]
-skidscan = { version = "2.0", default-features = false }
-proxy-dll = { git = "https://github.com/redstrate/dll-proxy-rs/", default-features = false } # needed to cross-compile from Linux
+skidscan = { git = "https://github.com/redstrate/skidscan", default-features = false } # my fork which contains various fixes
+proxy-dll = { git = "https://github.com/redstrate/dll-proxy-rs/", default-features = false } # my fork which contains various fixes and needed to cross-compile from Linux
 windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_SystemServices", "Win32_UI_WindowsAndMessaging", "Win32_System_LibraryLoader", "Win32_Networking_WinHttp"], default-features = false }
 serde = { version = "1.0", features = ["derive"], default-features = false }
 toml = { version = "0.8", features = ["parse"], default-features = false }
