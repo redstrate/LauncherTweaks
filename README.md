@@ -44,13 +44,7 @@ Then you need to install the MinGW toolchain, as one of our dependencies has to 
 
 ## Tips & Tricks
 
-### Launcher Functions
-
-Here are some interesting native functions that are callable from JavaScript. To call these, use `window.external.user`.
-
-* `systemConfig`: Opens the system config program.
-* `requestExit`: Despite the name, exits the launcher immediately.
-* `requestReboot`: Exits the launcher immediately, doesn't seem to come back though?
+Check out the [Launcher page on wiki.xiv.zone](https://wiki.xiv.zone/Launcher) for more details about the launcher's functions.
 
 ### Logging Proxy
 
