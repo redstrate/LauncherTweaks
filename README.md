@@ -9,7 +9,7 @@ Tweaks for the official FFXIV launcher.
 
 ## Usage
 
-Grab a build from [GitHub Actions](https://github.com/redstrate/LauncherTweaks/actions) or build the project with the instructions below. Then, place the `version.dll` next to the launcher.
+Grab a build from [GitHub Actions](https://github.com/redstrate/LauncherTweaks/actions) or build the project with the instructions below. Then, place the `winhttp.dll` next to the launcher.
 
 To configure the launcher URL, place a `launchertweaks.toml` next to the launcher executable:
 
@@ -20,7 +20,7 @@ launcher_url = "https://launcher.mysite.localhost/"
 
 ### macOS/Linux
 
-Wine will prefer it's own `version.dll` by default, but you can change it the configuration (`winecfg`). Applications like [Bottles](https://usebottles.com/) have dedicated settings for this too.
+Wine will prefer it's own `winhttp.dll` by default, but you can change it the configuration (`winecfg`). Applications like [Bottles](https://usebottles.com/) have dedicated settings for this too.
 
 ## Building
 

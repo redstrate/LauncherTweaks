@@ -40,5 +40,5 @@ jobs:
         path: |
           LICENSE
           README.md
-          target/x86_64-pc-windows-gnu/release/version.dll
+          target/x86_64-pc-windows-gnu/release/winhttp.dll
         if-no-files-found: error
