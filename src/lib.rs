@@ -9,6 +9,8 @@ use utilities::{find_signature, find_symbol, get_utf16_bytes, show_message};
 use proxy_dll::proxy;
 use retour::static_detour;
 use skidscan::Signature;
+use std::ffi::CStr;
+use std::ffi::c_char;
 use std::ffi::c_void;
 use windows::{Win32::Networking::WinHttp::*, core::*};
 
@@ -111,6 +113,114 @@ fn use_system_proxy() {
     }
 }
 
+static_detour! {
+    static InstallWebView2: fn(u64) -> i32;
+}
+
+fn install_webview2_detour(_unk: u64) -> i32 {
+    // non-zero: will let us through, even if we don't have WebView2
+    // 0 = will do the "webview2 failed to install message"
+    return 1;
+}
+
+fn disable_webview2_install() {
+    let config = get_config();
+    if !config.disable_webview2_install {
+        return;
+    }
+
+    unsafe {
+        // TODO: wow, that func sig is baaaad
+        let install_webview2_addr =
+                        skidscan::signature!("48 89 5c 24 10 48 89 7c 24 18 55 48 8d 6c 24 c0 48 81 ec 40 01 00 00 48 8b 05 6a 4f 0f 00 48 33 c4 48 89 45 30 48 8b d9 e8 d3 cb ff ff").scan_module(BOOT_FILENAME).unwrap();
+        let install_webview2_fn =
+            std::mem::transmute::<*mut u8, fn(u64) -> i32>(install_webview2_addr);
+        InstallWebView2
+            .initialize(install_webview2_fn, install_webview2_detour)
+            .expect("Failed to initialize InstallWebView2 hook");
+        InstallWebView2
+            .enable()
+            .expect("Failed to hook into InstallWebView2");
+    }
+}
+
+static_detour! {
+    static GetConfigOption: fn(*const ConfigBase, u32) -> *mut ConfigEntry;
+}
+
+#[repr(C)]
+struct ConfigEntry {
+    _padding: [u8; 0x10],
+    name: *const c_char,
+    config_type: ConfigType,
+    _padding2: [u8; 0x4],
+    config_value: ConfigValue,
+}
+
+#[repr(i32)]
+#[derive(Debug)]
+enum ConfigType {
+    Unused = 0,
+    Category = 1,
+    UInt = 2,
+    Float = 3,
+    String = 4,
+}
+
+#[repr(C)]
+union ConfigValue {
+    UInt: u32,
+    Float: f32,
+}
+
+#[repr(C)]
+struct ConfigBase {
+    _padding: [u8; 0x18],
+    ConfigEntry: *const ConfigEntry,
+}
+
+fn get_config_option_detour(
+    config_base: *const ConfigBase,
+    config_option: u32,
+) -> *mut ConfigEntry {
+    unsafe {
+        let option = GetConfigOption.call(config_base, config_option);
+        if option != std::ptr::null_mut() {
+            if (*option).name != std::ptr::null() {
+                let name = CStr::from_ptr((*option).name as *const i8);
+
+                if name.to_str().unwrap() == "SkipBootupVercheck" {
+                    (*option).config_value.UInt = 1;
+                }
+            }
+        }
+
+        option
+    }
+}
+
+fn disable_boot_version_check() {
+    let config = get_config();
+    if !config.disable_boot_version_check {
+        return;
+    }
+
+    unsafe {
+        // TODO: *terrible* function man
+        let get_config_option_addr = skidscan::signature!("48 89 5c 24 08 48 89 6c 24 10 48 89 74 24 18 57 48 83 ec 20 8b f2 48 8d b9 c8 00 00 00 48 8b e9 33 db").scan_module(BOOT_FILENAME).unwrap();
+        let get_config_option_fn = std::mem::transmute::<
+            *mut u8,
+            fn(*const ConfigBase, u32) -> *mut ConfigEntry,
+        >(get_config_option_addr);
+        GetConfigOption
+            .initialize(get_config_option_fn, get_config_option_detour)
+            .expect("Failed to initialize GetConfigOption hook");
+        GetConfigOption
+            .enable()
+            .expect("Failed to hook into GetConfigOption");
+    }
+}
+
 #[proxy]
 fn main() {
     // Emit panic messages with message boxes
@@ -141,6 +251,8 @@ fn main() {
         }
         BOOT_FILENAME => {
             use_system_proxy();
+            disable_webview2_install();
+            disable_boot_version_check();
         }
         _ => {}
     }

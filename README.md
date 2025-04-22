@@ -4,8 +4,10 @@ Tweaks for the official FFXIV launcher.
 
 ## Features
 
-* Allows configuring the launcher URL, enabling you to write custom launcher pages.
+* Configure the launcher URL, enabling you to write custom launcher pages.
 * Force the launcher/boot executable to use the system proxy. (The web browser portions of the launcher already use the system proxy.)
+* Bypasses the (soft) WebView2 requirement introduced in Patch 7.21.
+* Disable the boot version check.
 
 ## Usage
 
