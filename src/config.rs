@@ -11,6 +11,7 @@ pub struct Config {
     #[serde(default = "Config::default_force_http")]
     pub force_http: bool,
     pub game_patch_server: Option<String>,
+    pub boot_patch_server: Option<String>,
 }
 
 impl Config {

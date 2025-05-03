@@ -29,6 +29,9 @@ const BOOT_FILENAME: &str = "ffxivboot64.exe";
 /// Domain of the retail game patch server.
 const RETAIL_GAME_PATCH_SERVER: &str = "patch-gamever.ffxiv.com";
 
+/// Domain of the retail boot patch server.
+const RETAIL_BOOT_PATCH_SERVER: &str = "patch-bootver.ffxiv.com";
+
 fn overwrite_launcher_url() {
     let config = get_config();
     let Some(launcher_url) = config.launcher_url else {
@@ -132,6 +135,10 @@ fn winhttpconnect_detour(
 
         if original_server_name == RETAIL_GAME_PATCH_SERVER && config.game_patch_server.is_some() {
             server_name = config.game_patch_server.unwrap();
+        } else if original_server_name == RETAIL_BOOT_PATCH_SERVER
+            && config.boot_patch_server.is_some()
+        {
+            server_name = config.boot_patch_server.unwrap();
         } else {
             server_name = original_server_name;
         }
@@ -350,6 +357,7 @@ fn main() {
             use_system_proxy();
             disable_webview2_install();
             disable_boot_version_check();
+            overwrite_patch_url();
             force_http();
         }
         _ => {}
