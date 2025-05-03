@@ -1,5 +1,8 @@
 #![allow(static_mut_refs)]
 
+mod blowfish;
+use blowfish::{decrypt_arguments, encrypt_arguments};
+
 mod config;
 use config::get_config;
 
@@ -323,6 +326,105 @@ fn disable_boot_version_check() {
     }
 }
 
+static_detour! {
+    static CreateProcessW: fn(PCWSTR, PWSTR, *mut c_void, *mut c_void, bool, u32, *mut c_void, PCWSTR, *mut c_void, *mut c_void) -> bool;
+}
+
+fn createprocessw_detour(
+    lpapplicationname: PCWSTR,
+    lpcommandline: PWSTR,
+    lpprocessattributes: *mut c_void,
+    lpthreadattributes: *mut c_void,
+    binherithandles: bool,
+    dwcreationflags: u32,
+    lpenvironment: *mut c_void,
+    lpcurrentdirectory: PCWSTR,
+    lpstartupinfo: *mut c_void,
+    lpprocessinformation: *mut c_void,
+) -> bool {
+    let config = get_config();
+
+    unsafe {
+        let old_commandline = lpcommandline.to_string().unwrap();
+        if !old_commandline.contains("ffxiv_dx11.exe") {
+            return CreateProcessW.call(
+                lpapplicationname,
+                lpcommandline,
+                lpprocessattributes,
+                lpthreadattributes,
+                binherithandles,
+                dwcreationflags,
+                lpenvironment,
+                lpcurrentdirectory,
+                lpstartupinfo,
+                lpprocessinformation,
+            );
+        }
+
+        let decrypted = decrypt_arguments(&old_commandline);
+
+        let mut commandline = decrypted.to_string();
+        commandline.push_str(&config.extra_game_arguments.unwrap());
+
+        let new_commandline = format!(
+            "{} \"{}\"",
+            &old_commandline[..old_commandline.find(" \"//**sqex").unwrap()],
+            encrypt_arguments(&commandline)
+        );
+
+        let new_commandline: Vec<u16> = new_commandline
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect();
+
+        CreateProcessW.call(
+            lpapplicationname,
+            PWSTR(new_commandline.as_ptr() as _),
+            lpprocessattributes,
+            lpthreadattributes,
+            binherithandles,
+            dwcreationflags,
+            lpenvironment,
+            lpcurrentdirectory,
+            lpstartupinfo,
+            lpprocessinformation,
+        )
+    }
+}
+
+fn add_game_args() {
+    let config = get_config();
+    if !config.extra_game_arguments.is_some() {
+        return;
+    }
+
+    unsafe {
+        let createprocessw_addr = find_symbol("CreateProcessW", "Kernel32.dll")
+            .expect("Failed to find CreateProcessW address");
+        let createprocessw_fn = std::mem::transmute::<
+            *mut u8,
+            fn(
+                PCWSTR,
+                PWSTR,
+                *mut c_void,
+                *mut c_void,
+                bool,
+                u32,
+                *mut c_void,
+                PCWSTR,
+                *mut c_void,
+                *mut c_void,
+            ) -> bool,
+        >(createprocessw_addr);
+        CreateProcessW
+            .initialize(createprocessw_fn, createprocessw_detour)
+            .expect("Failed to initialize CreateProcessW hook");
+        CreateProcessW
+            .enable()
+            .expect("Failed to hook into CreateProcessW");
+    }
+}
+
 #[proxy]
 fn main() {
     // Emit panic messages with message boxes
@@ -352,6 +454,7 @@ fn main() {
             overwrite_launcher_url();
             overwrite_patch_url();
             force_http();
+            add_game_args();
         }
         BOOT_FILENAME => {
             use_system_proxy();
