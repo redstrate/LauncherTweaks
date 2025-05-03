@@ -10,6 +10,7 @@ Tweaks for the official FFXIV launcher.
 * Force the launcher/boot executable to always communicate over HTTP instead of HTTPS, to make it easier to replace with local services.
 * Bypasses the (soft) WebView2 requirement introduced in Patch 7.21.
 * Disable the boot version check.
+* Add extra arguments when launching the game.
 
 ## Usage
 

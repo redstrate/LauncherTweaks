@@ -12,6 +12,7 @@ pub struct Config {
     pub force_http: bool,
     pub game_patch_server: Option<String>,
     pub boot_patch_server: Option<String>,
+    pub extra_game_arguments: Option<String>,
 }
 
 impl Config {
