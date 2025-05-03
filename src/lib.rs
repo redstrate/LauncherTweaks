@@ -26,6 +26,9 @@ const LAUNCHER_FILENAME: &str = "ffxivlauncher64.exe";
 /// Filename of the boot executable.
 const BOOT_FILENAME: &str = "ffxivboot64.exe";
 
+/// Domain of the retail game patch server.
+const RETAIL_GAME_PATCH_SERVER: &str = "patch-gamever.ffxiv.com";
+
 fn overwrite_launcher_url() {
     let config = get_config();
     let Some(launcher_url) = config.launcher_url else {
@@ -63,6 +66,8 @@ fn overwrite_launcher_url() {
 
 static_detour! {
     static WinHttpOpen: fn(PCWSTR, WINHTTP_ACCESS_TYPE, PCWSTR, PCWSTR, u32) -> *mut c_void;
+    static WinHttpConnect: fn(*mut c_void, PCWSTR, u16, u32) -> *mut c_void;
+    static WinHttpOpenRequest: fn(*mut c_void, PCWSTR, PCWSTR, PCWSTR, PCWSTR, *mut c_void, u32) -> *mut c_void;
 }
 
 fn winhttpopen_detour(
@@ -110,6 +115,96 @@ fn use_system_proxy() {
         WinHttpOpen
             .enable()
             .expect("Failed to hook into WinHttpOpen");
+    }
+}
+
+fn winhttpconnect_detour(
+    hsession: *mut c_void,
+    pswzservername: PCWSTR,
+    nserverport: u16,
+    dwreserved: u32,
+) -> *mut c_void {
+    let config = get_config();
+
+    let server_name;
+    unsafe {
+        let original_server_name = pswzservername.to_string().unwrap();
+
+        if original_server_name == RETAIL_GAME_PATCH_SERVER && config.game_patch_server.is_some() {
+            server_name = config.game_patch_server.unwrap();
+        } else {
+            server_name = original_server_name;
+        }
+    }
+
+    let http_proxy: Vec<u16> = server_name
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+
+    let port = if config.force_http { 80 } else { nserverport };
+
+    // See https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpconnect
+    WinHttpConnect.call(hsession, PCWSTR(http_proxy.as_ptr() as _), port, dwreserved)
+}
+
+fn winhttpopenrequest_detour(
+    hconnect: *mut c_void,
+    pwszverb: PCWSTR,
+    pwszobjectname: PCWSTR,
+    pwszversion: PCWSTR,
+    pwszreferrer: PCWSTR,
+    ppwszaccepttypes: *mut c_void,
+    _dwflags: u32,
+) -> *mut c_void {
+    // See https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpopenrequest
+    WinHttpOpenRequest.call(
+        hconnect,
+        pwszverb,
+        pwszobjectname,
+        pwszversion,
+        pwszreferrer,
+        ppwszaccepttypes,
+        0, // kill secure connect flag
+    )
+}
+
+fn overwrite_patch_url() {
+    unsafe {
+        let winhttpconnect_addr = find_symbol("WinHttpConnect", "winhttp.dll")
+            .expect("Failed to find WinHttpConnect address");
+        let winhttpconnect_fn = std::mem::transmute::<
+            *mut u8,
+            fn(*mut c_void, PCWSTR, u16, u32) -> *mut c_void,
+        >(winhttpconnect_addr);
+        WinHttpConnect
+            .initialize(winhttpconnect_fn, winhttpconnect_detour)
+            .expect("Failed to initialize WinHttpConnect hook");
+        WinHttpConnect
+            .enable()
+            .expect("Failed to hook into WinHttpOpen");
+    }
+}
+
+fn force_http() {
+    let config = get_config();
+    if !config.force_http {
+        return;
+    }
+
+    unsafe {
+        let winhttpopenrequest_addr = find_symbol("WinHttpOpenRequest", "winhttp.dll")
+            .expect("Failed to find WinHttpOpenRequest address");
+        let winhttpopenrequest_fn = std::mem::transmute::<
+            *mut u8,
+            fn(*mut c_void, PCWSTR, PCWSTR, PCWSTR, PCWSTR, *mut c_void, u32) -> *mut c_void,
+        >(winhttpopenrequest_addr);
+        WinHttpOpenRequest
+            .initialize(winhttpopenrequest_fn, winhttpopenrequest_detour)
+            .expect("Failed to initialize WinHttpOpenRequest hook");
+        WinHttpOpenRequest
+            .enable()
+            .expect("Failed to hook into WinHttpOpenRequest");
     }
 }
 
@@ -248,11 +343,14 @@ fn main() {
         LAUNCHER_FILENAME => {
             use_system_proxy();
             overwrite_launcher_url();
+            overwrite_patch_url();
+            force_http();
         }
         BOOT_FILENAME => {
             use_system_proxy();
             disable_webview2_install();
             disable_boot_version_check();
+            force_http();
         }
         _ => {}
     }

@@ -8,6 +8,9 @@ pub struct Config {
     pub disable_webview2_install: bool,
     #[serde(default = "Config::default_disable_boot_version_check")]
     pub disable_boot_version_check: bool,
+    #[serde(default = "Config::default_force_http")]
+    pub force_http: bool,
+    pub game_patch_server: Option<String>,
 }
 
 impl Config {
@@ -16,6 +19,10 @@ impl Config {
     }
 
     fn default_disable_boot_version_check() -> bool {
+        false
+    }
+
+    fn default_force_http() -> bool {
         false
     }
 }
