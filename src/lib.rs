@@ -437,7 +437,15 @@ fn main() {
             "Unknown error".to_string()
         };
 
-        show_message(&format!("Error: {s}"));
+        if let Some(location) = panic_hook_info.location() {
+            show_message(&format!(
+                "Error: {s} in file '{}' at line {}",
+                location.file(),
+                location.line()
+            ));
+        } else {
+            show_message(&format!("Error: {s}"));
+        }
     }));
 
     let current_exe = std::env::current_exe().expect("Failed to get executable path");
