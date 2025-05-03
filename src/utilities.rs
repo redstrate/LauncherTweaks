@@ -14,7 +14,6 @@ pub fn find_signature(sig: Signature) -> Option<*mut u8> {
 }
 
 pub fn find_symbol(symbol: &str, module: &str) -> Option<*mut u8> {
-    // TODO: skidscan can do this too...
     let module: Vec<u16> = module.encode_utf16().chain(std::iter::once(0)).collect();
     let symbol = CString::new(symbol).expect("Failed to parse symbol!");
     unsafe {
