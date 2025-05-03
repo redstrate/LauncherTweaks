@@ -2,7 +2,7 @@ const checksum_table: [char; 16] = [
     'f', 'X', '1', 'p', 'G', 't', 'd', 'S', '5', 'C', 'A', 'P', '4', '_', 'V', 'L',
 ];
 
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+use base64::{Engine as _, engine::general_purpose::URL_SAFE};
 use physis::blowfish::Blowfish;
 use windows::Win32::System::SystemInformation::*;
 
@@ -30,8 +30,9 @@ pub fn decrypt_arguments(commandline: &str) -> String {
     let index = commandline.find("sqex").unwrap();
 
     let base64 = &commandline[index + 8..commandline.len() - 6];
+
     let blowfish = initialize_blowfish();
-    let decoded = URL_SAFE_NO_PAD.decode(base64.as_bytes()).unwrap();
+    let decoded = URL_SAFE.decode(base64.as_bytes()).unwrap();
 
     let result = blowfish.decrypt(&decoded).unwrap();
 
@@ -43,7 +44,7 @@ pub fn encrypt_arguments(commandline: &str) -> String {
     let blowfish = initialize_blowfish();
     let encrypted = blowfish.encrypt(commandline.as_bytes()).unwrap();
 
-    let encoded = URL_SAFE_NO_PAD.encode(encrypted);
+    let encoded = URL_SAFE.encode(encrypted);
     let checksum = calculate_checksum(calculate_blowfish_key());
 
     format!("//**sqex0003{}{}**//", encoded, checksum)
