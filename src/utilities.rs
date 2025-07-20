@@ -37,7 +37,7 @@ pub fn show_message(message: &str) {
 
 pub fn get_utf16_bytes(string: &str) -> Vec<u8> {
     unsafe {
-        let utf16_bytes: Vec<u16> = string.encode_utf16().collect();
+        let utf16_bytes: Vec<u16> = string.encode_utf16().chain(std::iter::once(0)).collect();
         utf16_bytes.align_to::<u8>().1.to_vec()
     }
 }
