@@ -1,4 +1,4 @@
-const checksum_table: [char; 16] = [
+const CHECKSUM_TABLE: [char; 16] = [
     'f', 'X', '1', 'p', 'G', 't', 'd', 'S', '5', 'C', 'A', 'P', '4', '_', 'V', 'L',
 ];
 
@@ -8,7 +8,7 @@ use windows::Win32::System::SystemInformation::*;
 
 fn calculate_checksum(key: u32) -> char {
     let value = key & 0x000F0000;
-    checksum_table[(value >> 16) as usize]
+    CHECKSUM_TABLE[(value >> 16) as usize]
 }
 
 fn calculate_blowfish_key() -> u32 {
@@ -17,7 +17,7 @@ fn calculate_blowfish_key() -> u32 {
         tick_count = GetTickCount();
     }
 
-    let ticks = tick_count & 0xFFFFFFFFu32;
+    let ticks = tick_count;
     ticks & 0xFFFF0000u32
 }
 
@@ -47,5 +47,5 @@ pub fn encrypt_arguments(commandline: &str) -> String {
     let encoded = URL_SAFE.encode(encrypted);
     let checksum = calculate_checksum(calculate_blowfish_key());
 
-    format!("//**sqex0003{}{}**//", encoded, checksum)
+    format!("//**sqex0003{encoded}{checksum}**//")
 }

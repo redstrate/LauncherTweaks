@@ -225,7 +225,7 @@ static_detour! {
 fn install_webview2_detour(_unk: u64) -> i32 {
     // non-zero: will let us through, even if we don't have WebView2
     // 0 = will do the "webview2 failed to install message"
-    return 1;
+    1
 }
 
 fn disable_webview2_install() {
@@ -264,6 +264,7 @@ struct ConfigEntry {
 
 #[repr(i32)]
 #[derive(Debug)]
+#[allow(dead_code)]
 enum ConfigType {
     Unused = 0,
     Category = 1,
@@ -274,14 +275,14 @@ enum ConfigType {
 
 #[repr(C)]
 union ConfigValue {
-    UInt: u32,
-    Float: f32,
+    uint: u32,
+    float: f32,
 }
 
 #[repr(C)]
 struct ConfigBase {
     _padding: [u8; 0x18],
-    ConfigEntry: *const ConfigEntry,
+    config_entry: *const ConfigEntry,
 }
 
 fn get_config_option_detour(
@@ -290,13 +291,11 @@ fn get_config_option_detour(
 ) -> *mut ConfigEntry {
     unsafe {
         let option = GetConfigOption.call(config_base, config_option);
-        if option != std::ptr::null_mut() {
-            if (*option).name != std::ptr::null() {
-                let name = CStr::from_ptr((*option).name as *const i8);
+        if !option.is_null() && !(*option).name.is_null() {
+            let name = CStr::from_ptr((*option).name as *const i8);
 
-                if name.to_str().unwrap() == "SkipBootupVercheck" {
-                    (*option).config_value.UInt = 1;
-                }
+            if name.to_str().unwrap() == "SkipBootupVercheck" {
+                (*option).config_value.uint = 1;
             }
         }
 
@@ -394,7 +393,7 @@ fn createprocessw_detour(
 
 fn add_game_args() {
     let config = get_config();
-    if !config.extra_game_arguments.is_some() {
+    if config.extra_game_arguments.is_none() {
         return;
     }
 
