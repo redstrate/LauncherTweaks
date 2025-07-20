@@ -25,7 +25,7 @@ launcher_url = "https://launcher.mysite.localhost/"
 
 ### macOS/Linux
 
-Wine will prefer it's own `winmm.dll` by default, but you can change it the configuration (`winecfg`). Applications like [Bottles](https://usebottles.com/) have dedicated settings for this too.
+Wine will prefer it's own `winmm.dll` by default, but you can change it using Wine's own configuration GUI (`winecfg`). Applications like [Bottles](https://usebottles.com/) have dedicated settings for this too.
 
 ## Building
 
