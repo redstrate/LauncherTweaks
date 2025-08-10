@@ -14,7 +14,7 @@ Tweaks for the official FFXIV launcher.
 
 ## Usage
 
-Grab a build from [GitHub Actions](https://github.com/redstrate/LauncherTweaks/actions) or build the project with the instructions below. Then, place the `winmm.dll` next to the launcher.
+Grab a build from [xiv.zone](https://xiv.zone/distrib/launchertweaks/LauncherTweaks.zip) or [GitHub Actions](https://github.com/redstrate/LauncherTweaks/actions) or build the project with the instructions below. Then, place the `winmm.dll` next to the launcher.
 
 To configure the launcher URL, place a `launchertweaks.toml` next to the launcher executable:
 
