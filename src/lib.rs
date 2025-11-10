@@ -17,6 +17,10 @@ use std::ffi::c_char;
 use std::ffi::c_void;
 use windows::{Win32::Networking::WinHttp::*, core::*};
 
+use crate::utilities::ask_launcher_message;
+use crate::utilities::check_official_server_decision;
+use crate::utilities::write_official_server_decision;
+
 /// So we can have a static address that won't change.
 static mut OVERRIDE_URL: Vec<u8> = Vec::new();
 
@@ -457,6 +461,11 @@ fn main() {
         .expect("Failed to parse executable filename")
     {
         LAUNCHER_FILENAME => {
+            // If we decided to connect to the official server during boot, then don't do anything.
+            if check_official_server_decision() {
+                return;
+            }
+
             use_system_proxy();
             overwrite_launcher_url();
             overwrite_patch_url();
@@ -464,6 +473,15 @@ fn main() {
             add_game_args();
         }
         BOOT_FILENAME => {
+            // Early exit if we decide to connect to the official server.
+            // Then, we write a decision file so we don't have to ask when boot eventually starts the launcher.
+            if !ask_launcher_message() {
+                write_official_server_decision(true);
+                return;
+            } else {
+                write_official_server_decision(false);
+            }
+
             use_system_proxy();
             disable_webview2_install();
             disable_boot_version_check();

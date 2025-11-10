@@ -3,7 +3,7 @@ use std::ffi::CString;
 use skidscan::Signature;
 use windows::{
     Win32::System::LibraryLoader::{GetModuleHandleW, GetProcAddress},
-    Win32::UI::WindowsAndMessaging::MessageBoxA,
+    Win32::UI::WindowsAndMessaging::{IDYES, MB_YESNO, MessageBoxA},
     core::*,
 };
 
@@ -33,6 +33,38 @@ pub fn show_message(message: &str) {
             Default::default(),
         );
     }
+}
+
+/// Asks whether you want to connect to a custom server, the official server.
+pub fn ask_launcher_message() -> bool {
+    unsafe {
+        let message = CString::new("Do you want to connect to your custom server? Select \"No\" to connect to the official server.").unwrap();
+
+        return MessageBoxA(
+            None,
+            PCSTR::from_raw(message.into_raw() as *const u8),
+            s!("LauncherTweaks"),
+            MB_YESNO,
+        ) == IDYES;
+    }
+}
+
+/// Writes to a temporary file that indicates whether or not the user chose to boot into the official server or not.
+pub fn write_official_server_decision(launch_official_server: bool) {
+    let mut server_file = std::env::temp_dir();
+    server_file.push("launchertweaks_server.txt");
+
+    let byte = if launch_official_server { 1u8 } else { 0u8 };
+    std::fs::write(server_file, [byte]).unwrap();
+}
+
+/// Checks the decision file created during boot.
+pub fn check_official_server_decision() -> bool {
+    let mut server_file = std::env::temp_dir();
+    server_file.push("launchertweaks_server.txt");
+
+    let decision = std::fs::read(server_file).unwrap_or_default();
+    return decision == [1];
 }
 
 pub fn get_utf16_bytes(string: &str) -> Vec<u8> {
