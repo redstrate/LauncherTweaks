@@ -16,13 +16,6 @@ Tweaks for the official FFXIV launcher.
 
 Grab a build from [xiv.zone](https://xiv.zone/distrib/launchertweaks/LauncherTweaks.zip) or [GitHub Actions](https://github.com/redstrate/LauncherTweaks/actions) or build the project with the instructions below. Then, place the `winmm.dll` next to the launcher.
 
-To configure the launcher URL, place a `launchertweaks.toml` next to the launcher executable:
-
-```toml
-# Must be able to serve a index.html or else the launcher 404s:
-launcher_url = "https://launcher.mysite.localhost/"
-```
-
 ### macOS/Linux
 
 Wine will prefer it's own `winmm.dll` by default, but you can change it using Wine's own configuration GUI (`winecfg`). Applications like [Bottles](https://usebottles.com/) have dedicated settings for this too.
