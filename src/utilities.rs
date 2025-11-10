@@ -40,12 +40,12 @@ pub fn ask_launcher_message() -> bool {
     unsafe {
         let message = CString::new("Do you want to connect to your custom server? Select \"No\" to connect to the official server.").unwrap();
 
-        return MessageBoxA(
+        MessageBoxA(
             None,
             PCSTR::from_raw(message.into_raw() as *const u8),
             s!("LauncherTweaks"),
             MB_YESNO,
-        ) == IDYES;
+        ) == IDYES
     }
 }
 
@@ -64,7 +64,7 @@ pub fn check_official_server_decision() -> bool {
     server_file.push("launchertweaks_server.txt");
 
     let decision = std::fs::read(server_file).unwrap_or_default();
-    return decision == [1];
+    decision == [1]
 }
 
 pub fn get_utf16_bytes(string: &str) -> Vec<u8> {
