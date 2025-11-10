@@ -53,7 +53,7 @@ Check out the [Launcher page on wiki.xiv.zone](https://wiki.xiv.zone/Launcher) f
 
 ### Logging Proxy
 
-You can use the `winmm_proxy` config option to sniff the non-web browser traffic from the launcher. You need a HTTP proxy capable of logging of course, I personally use [mitmproxy](https://mitmproxy.org).
+You can use the `winhttp_proxy` config option to sniff the non-web browser traffic from the launcher. You need a HTTP proxy capable of logging of course, I personally use [mitmproxy](https://mitmproxy.org).
 
 ## Credits
 
