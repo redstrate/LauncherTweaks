@@ -67,6 +67,8 @@ jobs:
         chmod 644 ~/.ssh/config
     - name: Upload artifacts
       run: |
+        echo $PWD
+        ls
         pushd LauncherTweaks
         zip -r ../LauncherTweaks.zip *
         popd
