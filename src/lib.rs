@@ -128,6 +128,13 @@ fn use_system_proxy() {
     }
 }
 
+fn process_server_name(server_name: &str) -> (String, u16) {
+    if let Some((server_name, port)) = server_name.split_once(':') {
+        return (server_name.to_string(), port.parse().unwrap());
+    }
+    return (server_name.to_string(), 80);
+}
+
 fn winhttpconnect_detour(
     hsession: *mut c_void,
     pswzservername: PCWSTR,
@@ -137,17 +144,19 @@ fn winhttpconnect_detour(
     let config = get_config();
 
     let server_name;
+    let port;
     unsafe {
         let original_server_name = pswzservername.to_string().unwrap();
 
         if original_server_name == RETAIL_GAME_PATCH_SERVER && config.game_patch_server.is_some() {
-            server_name = config.game_patch_server.unwrap();
+            (server_name, port) = process_server_name(&config.game_patch_server.unwrap());
         } else if original_server_name == RETAIL_BOOT_PATCH_SERVER
             && config.boot_patch_server.is_some()
         {
-            server_name = config.boot_patch_server.unwrap();
+            (server_name, port) = process_server_name(&config.boot_patch_server.unwrap());
         } else {
             server_name = original_server_name;
+            port = if config.force_http { 80 } else { nserverport };
         }
     }
 
@@ -155,8 +164,6 @@ fn winhttpconnect_detour(
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect();
-
-    let port = if config.force_http { 80 } else { nserverport };
 
     // See https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpconnect
     WinHttpConnect.call(hsession, PCWSTR(http_proxy.as_ptr() as _), port, dwreserved)
@@ -219,37 +226,6 @@ fn force_http() {
         WinHttpOpenRequest
             .enable()
             .expect("Failed to hook into WinHttpOpenRequest");
-    }
-}
-
-static_detour! {
-    static InstallWebView2: fn(u64) -> i32;
-}
-
-fn install_webview2_detour(_unk: u64) -> i32 {
-    // non-zero: will let us through, even if we don't have WebView2
-    // 0 = will do the "webview2 failed to install message"
-    1
-}
-
-fn disable_webview2_install() {
-    let config = get_config();
-    if !config.disable_webview2_install {
-        return;
-    }
-
-    unsafe {
-        // TODO: wow, that func sig is baaaad
-        let install_webview2_addr =
-                        skidscan::signature!("48 89 5c 24 10 48 89 7c 24 18 55 48 8d 6c 24 c0 48 81 ec 40 01 00 00 48 8b 05 6a 4f 0f 00 48 33 c4 48 89 45 30 48 8b d9 e8 d3 cb ff ff").scan_module(BOOT_FILENAME).unwrap();
-        let install_webview2_fn =
-            std::mem::transmute::<*mut u8, fn(u64) -> i32>(install_webview2_addr);
-        InstallWebView2
-            .initialize(install_webview2_fn, install_webview2_detour)
-            .expect("Failed to initialize InstallWebView2 hook");
-        InstallWebView2
-            .enable()
-            .expect("Failed to hook into InstallWebView2");
     }
 }
 
@@ -483,7 +459,6 @@ fn main() {
             }
 
             use_system_proxy();
-            disable_webview2_install();
             disable_boot_version_check();
             overwrite_patch_url();
             force_http();
